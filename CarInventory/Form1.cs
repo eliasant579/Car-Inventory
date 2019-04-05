@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Xml;
 
 namespace CarInventory
 {
@@ -16,6 +17,7 @@ namespace CarInventory
         public Form1()
         {
             InitializeComponent();
+            loadDB();
         }
 
         private void addButton_Click(object sender, EventArgs e)
@@ -68,9 +70,62 @@ namespace CarInventory
             }
         }
 
+        public void loadDB()
+        {
+            string newYear, newMake, newColour, newMileage;
+            newYear = newMake = newColour = newMileage = "";
+
+            XmlReader reader = XmlReader.Create("employeeData.xml");
+
+            while (reader.Read())
+            {
+                if (reader.NodeType == XmlNodeType.Text)
+                {
+                    newYear = reader.ReadString();
+
+                    reader.ReadToNextSibling("make");
+                    newMake = reader.ReadString();
+
+                    reader.ReadToNextSibling("colour");
+                    newColour = reader.ReadString();
+
+                    reader.ReadToNextSibling("mileage");
+                    newMileage = reader.ReadString();
+
+                    Car s = new Car(newYear, newMake, newColour, newMileage);
+                    inventory.Add(s);
+                }
+            }
+
+            reader.Close();
+        }
+
         private void exitButton_Click(object sender, EventArgs e)
         {
             Application.Exit();
+        }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            XmlWriter writer = XmlWriter.Create("employeeData.xml", null);
+
+            writer.WriteStartElement("Cars");
+
+            foreach (Car emp in inventory)
+            {
+                writer.WriteStartElement("Car");
+
+                writer.WriteElementString("year", emp.year);
+                writer.WriteElementString("make", emp.make);
+                writer.WriteElementString("colour", emp.colour);
+                writer.WriteElementString("mileage", emp.mileage);
+
+                writer.WriteEndElement();
+            }
+
+            writer.WriteEndElement();
+
+            writer.Close();
         }
     }
 }
